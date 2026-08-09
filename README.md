@@ -65,6 +65,6 @@ python implementation.py
 | Chunking    | Section → chunk working                     |
 | Embeddings  | MiniLM working                              |
 | Vectorstore | Chroma upsert working                       |
-| Retrieval   | Stub                                        |
-| Generation  | Stub                                        |
+| Retrieval   | Retrival with reranking                     |
+| Generation  | Using Gemini LLM                            |
 | Frontend    | Indexing UI with live step progress         |
