@@ -52,3 +52,29 @@ export async function runIngestPipeline(file, onEvent) {
     }
   }
 }
+
+export async function askQuestion(query) {
+  const response = await fetch(`${API_BASE}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query,
+      top_k: 2,
+      candidate_k: 6,
+      use_reranker: true,
+    }),
+  });
+
+  if (!response.ok) {
+    let detail = `Ask failed (${response.status})`;
+    try {
+      const data = await response.json();
+      detail = data.detail || detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+
+  return response.json();
+}

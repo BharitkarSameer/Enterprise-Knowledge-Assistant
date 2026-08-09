@@ -33,5 +33,6 @@ class ChunkingResult(BaseModel):
 
     document_id: str
     title: str | None = None
+    filename: str | None = None
     chunks: list[Chunk]
     chunk_count: int = 0

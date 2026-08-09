@@ -1,163 +1,40 @@
-import { useMemo, useState } from "react";
-import {
-  PIPELINE_STEPS,
-  STEP_LABELS,
-  runIngestPipeline,
-} from "./api";
-
-function initialSteps() {
-  return PIPELINE_STEPS.map((id) => ({
-    id,
-    label: STEP_LABELS[id],
-    status: "pending",
-  }));
-}
-
-function statusIcon(status) {
-  if (status === "done") return "✓";
-  if (status === "running") return "●";
-  if (status === "error") return "!";
-  return "○";
-}
+import { useState } from "react";
+import IngestPanel from "./IngestPanel";
+import ChatPanel from "./ChatPanel";
 
 export default function App() {
-  const [file, setFile] = useState(null);
-  const [steps, setSteps] = useState(initialSteps);
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState(null);
-  const [summary, setSummary] = useState(null);
-
-  const allDone = useMemo(
-    () => steps.every((s) => s.status === "done") && summary != null,
-    [steps, summary],
-  );
-
-  function updateStep(id, status, detail) {
-    setSteps((prev) =>
-      prev.map((step) =>
-        step.id === id ? { ...step, status, detail: detail ?? step.detail } : step,
-      ),
-    );
-  }
-
-  async function onStart() {
-    if (!file || running) return;
-    setRunning(true);
-    setError(null);
-    setSummary(null);
-    setSteps(initialSteps());
-
-    try {
-      await runIngestPipeline(file, (event) => {
-        if (event.step === "complete") {
-          setSummary(event.summary ?? null);
-          return;
-        }
-        if (event.step === "error") {
-          const message = event.detail?.message ?? "Pipeline failed";
-          setError(message);
-          setSteps((prev) =>
-            prev.map((step) =>
-              step.status === "running" ? { ...step, status: "error" } : step,
-            ),
-          );
-          return;
-        }
-
-        if (!PIPELINE_STEPS.includes(event.step)) return;
-        const id = event.step;
-        if (event.status === "running") updateStep(id, "running");
-        if (event.status === "done") updateStep(id, "done", event.detail);
-        if (event.status === "error") updateStep(id, "error", event.detail);
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setRunning(false);
-    }
-  }
+  const [tab, setTab] = useState("ingest");
 
   return (
     <div className="page">
       <header className="header">
         <p className="eyebrow">Enterprise Knowledge Assistant</p>
-        <h1>Document indexing</h1>
+        <h1>{tab === "ingest" ? "Document indexing" : "Ask the knowledge base"}</h1>
         <p className="lede">
-          Upload a markdown file and watch each pipeline stage complete live —
-          from ingestion through Chroma storage.
+          {tab === "ingest"
+            ? "Upload a markdown file and watch each pipeline stage complete live — from ingestion through Chroma storage."
+            : "Chat with your indexed documents. Answers are grounded in retrieved chunks and include citations."}
         </p>
       </header>
 
-      <section className="panel">
-        <label className="file-label">
-          <span>Markdown file</span>
-          <input
-            type="file"
-            accept=".md,.markdown,text/markdown"
-            disabled={running}
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
-
+      <nav className="tabs" aria-label="Main">
         <button
-          className="primary"
           type="button"
-          disabled={!file || running}
-          onClick={onStart}
+          className={`tab${tab === "ingest" ? " tab-active" : ""}`}
+          onClick={() => setTab("ingest")}
         >
-          {running ? "Indexing…" : "Start indexing"}
+          Ingestion
         </button>
-      </section>
+        <button
+          type="button"
+          className={`tab${tab === "ask" ? " tab-active" : ""}`}
+          onClick={() => setTab("ask")}
+        >
+          Retrieval
+        </button>
+      </nav>
 
-      <section className="steps" aria-label="Pipeline progress">
-        {steps.map((step) => (
-          <article key={step.id} className={`step step-${step.status}`}>
-            <div className="step-mark" aria-hidden>
-              {statusIcon(step.status)}
-            </div>
-            <div className="step-body">
-              <h2>{step.label}</h2>
-              <p className="step-status">{step.status}</p>
-              {step.detail && (
-                <pre className="step-detail">
-                  {JSON.stringify(step.detail, null, 2)}
-                </pre>
-              )}
-            </div>
-          </article>
-        ))}
-      </section>
-
-      {error && <p className="error">{error}</p>}
-
-      {allDone && summary && (
-        <section className="summary">
-          <h2>Indexed</h2>
-          <ul>
-            <li>
-              <strong>Title</strong> {summary.title}
-            </li>
-            <li>
-              <strong>File</strong> {summary.filename}
-            </li>
-            <li>
-              <strong>Sections</strong> {summary.section_count}
-            </li>
-            <li>
-              <strong>Chunks stored</strong> {summary.stored}
-            </li>
-            <li>
-              <strong>Model</strong> {summary.model} ({summary.dimensions}d)
-            </li>
-            <li>
-              <strong>Collection</strong> {summary.collection}
-            </li>
-          </ul>
-          <p className="muted">
-            Ask / retrieval UI comes next — indexing path is complete.
-          </p>
-        </section>
-      )}
+      {tab === "ingest" ? <IngestPanel /> : <ChatPanel />}
     </div>
   );
 }

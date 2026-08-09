@@ -60,6 +60,7 @@ async def embed_chunks(
     return EmbeddingResult(
         document_id=chunked.document_id,
         title=chunked.title,
+        filename=chunked.filename,
         model=provider.model_name,
         dimensions=provider.dimensions,
         items=items,

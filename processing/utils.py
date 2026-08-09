@@ -2,12 +2,30 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+from pathlib import Path
 from uuid import uuid4
 
 
 def new_id(prefix: str) -> str:
+    """Random id — prefer stable_id for anything persisted in Chroma."""
     return f"{prefix}_{uuid4().hex[:12]}"
+
+
+def stable_id(prefix: str, *parts: str) -> str:
+    """Deterministic id from stable parts (same input → same id)."""
+    material = "\n".join(
+        str(p).strip().lower() for p in parts if p is not None and str(p).strip()
+    )
+    digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+    return f"{prefix}_{digest}"
+
+
+def document_id_for_filename(filename: str) -> str:
+    """Same source filename always maps to the same document_id."""
+    name = Path(filename).name.strip().lower()
+    return stable_id("doc", name)
 
 
 def normalize_markdown(text: str) -> str:

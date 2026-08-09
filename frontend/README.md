@@ -19,4 +19,12 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173 — Vite proxies `/pipeline` to the API.
+Open http://127.0.0.1:5173 — Vite proxies `/pipeline` and `/ask` to the API.
+
+Put your Gemini key in `.env` at the project root:
+
+```bash
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-3-flash-preview
+```
+

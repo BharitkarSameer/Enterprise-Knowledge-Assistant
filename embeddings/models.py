@@ -27,6 +27,7 @@ class EmbeddingResult(BaseModel):
 
     document_id: str
     title: str | None = None
+    filename: str | None = None
     model: str
     dimensions: int
     items: list[EmbeddedChunk]
