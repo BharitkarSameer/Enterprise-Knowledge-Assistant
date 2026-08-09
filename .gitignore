@@ -1,0 +1,10 @@
+chromadb/
+*.pyc
+__pycache__/
+.myenv/
+myenv/
+data/
+.env
+*.egg-info/
+.DS_Store
+.env
